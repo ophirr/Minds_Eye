@@ -60,7 +60,7 @@ int att;
 // Brightness tuning (we'll want a photo resistor on the frame to make the LEDs brightness match ambient comfortably
 byte MaxBright = 50;
 byte MinBright = 10;
-byte BrightLength = 100;
+byte BrightLength = 50;
 
 // The following definitions are pqart of the NeuroSky sample code
 // checksum variables
@@ -82,7 +82,7 @@ long previousMillis = 0;        // will store last time LED was updated
 
 // the follow variables is a long because the time, measured in miliseconds,
 // will quickly become a bigger number than can be stored in an int.
-long interval = 1000;           // interval at which to blink (milliseconds)
+long interval = 800;           // interval at which to blink (milliseconds)
 
 // system variables
 long lastReceivedPacket = 0;
@@ -162,8 +162,10 @@ void loop()
   Serial.println();
   #endif
   
-  if((currentMillis - previousMillis) > interval ) {
-    // save the last time you blinked the LED 
+  //if((currentMillis - previousMillis) > interval ) {
+    
+    if((currentMillis - previousMillis) > (interval + (medrcvd * 10) )) {
+    // save the last time we hit interval 
     
     #if DEBUG >=1
     Serial.print("Interval Time exceeded:"); 
@@ -181,6 +183,13 @@ void loop()
       Serial.println(medrcvd);
       #endif
       
+      Serial.print("meditation: ");
+      Serial.println(medrcvd);
+      BrightLength = (BrightLength + (medrcvd * 5));
+      Serial.print("BrightLength: ");
+      Serial.println(BrightLength);  
+      Serial.println();
+      
       // TURN ON LEDS
       if ( medrcvd > 1 ) { fire(medrcvd); }
       //if ( meditation > 1 ) { rainbow(meditation,10); }
@@ -190,7 +199,8 @@ void loop()
     }
   }
     
-    // Serial.println("Would have triggered Fire\n");
+    // Reset BrightLength
+    BrightLength = 50;
 }
 
 #if HARDSERIAL == 0
