@@ -31,7 +31,7 @@
 #define HARDSERIAL 1
 
 // Increase non-zero values for increasing levels of debug info
-#define DEBUG 1
+#define DEBUG 0
 
 // Make sure you've downloaded and installed the 
 // SoftwareSerial library prior to enabling
@@ -57,6 +57,10 @@ int STATUS = 13;
 
 int att;
 
+// Brightness tuning (we'll want a photo resistor on the frame to make the LEDs brightness match ambient comfortably
+byte MaxBright = 50;
+byte MinBright = 10;
+byte BrightLength = 100;
 
 // The following definitions are pqart of the NeuroSky sample code
 // checksum variables
@@ -168,14 +172,14 @@ void loop()
     
     previousMillis = currentMillis;    
    
-   
-   
-    //meditation = 0;
     if (eegvalready) {
+      
+      #if DEBUG >=1
       Serial.print("attention: ");
       Serial.println(attrcvd);
       Serial.print("meditation: ");
       Serial.println(medrcvd);
+      #endif
       
       // TURN ON LEDS
       if ( medrcvd > 1 ) { fire(medrcvd); }
@@ -529,113 +533,31 @@ void readNeuroValues() {
 */
 void fire(int eegval)
 {
+   #if DEBUG >=1
    Serial.print ("Got eegval: ");
    Serial.println(eegval);
+   #endif
    
       if (eegval <= 15 ) {
-    fadeUp(127,0,127,20);		// violet
-    fadeDown(127,0,127,20);		// violet
+    fadeUp(127,0,127,BrightLength);		// violet
+    fadeDown(127,0,127,BrightLength);		// violet
    } else if (eegval <= 30) {
-    fadeUp(0, 0,127, 10);		// blue
-    fadeDown(0, 0,127, 10);		// blue
+    fadeUp(0, 0,127, BrightLength);		// blue
+    fadeDown(0, 0,127, BrightLength);		// blue
    } else if (eegval <= 45) {
-     fadeUp(0, 127,127, 10);
-     fadeDown(0, 127,127, 10);		// teal
+     fadeUp(0, 127,127, BrightLength);
+     fadeDown(0, 127,127, BrightLength);		// teal
    } else if (eegval <= 60) {
-     fadeUp(0, 127,0, 10);
-     fadeDown(0, 127,0, 10);		// green
+     fadeUp(0, 127,0, BrightLength);
+     fadeDown(0, 127,0, BrightLength);		// green
    } else if (eegval <= 75) {
-     fadeUp(127, 127,0, 10);
-     fadeDown(127, 127,0, 10);		// orange
+     fadeUp(127, 127,0, BrightLength);
+     fadeDown(127, 127,0, BrightLength);		// orange
    } else {
-     fadeUp(127,0,0, 10);		// red
-     fadeDown(127,0,0, 10);		// red
+     fadeUp(127,0,0, BrightLength);		// red
+     fadeDown(127,0,0, BrightLength);		// red
   }
-   
-//   if (attention <= 33 ) {
-//    turnAllOn(strip.Color(127,0,127), 200);		// violet
-//   } else if (attention <= 40) {
-//    turnAllOn(strip.Color(0, 0,127), 200);		// blue
-//   } else if (attention <= 40) {
-//    turnAllOn(strip.Color(0, 127,127), 200);		// teal
-//   } else if (attention <= 60) {
-//    turnAllOn(strip.Color(0, 127,0), 200);		// green
-//   } else if (attention <= 80) {
-//    turnAllOn(strip.Color(127, 127,0), 200);		// orange
-//   } else {
-//    turnAllOn(strip.Color(127,0,0), 200);		// red
-//  }
 
 }
 
-
-
-void rainbow(uint8_t eegval, uint8_t wait) {
-	int i, j;
-
-    Serial.print("realttention: ");
-    Serial.println(eegval);
-    eegval = map(eegval, 0, 101, 385, 0);
-  
-    Serial.print("eegval: ");
-    Serial.println(eegval);
-    Serial.print("oldeegval: ");
-    Serial.println(oldeegval);
-    Serial.println();
-    
-    if (oldeegval >= eegval) {
-	for (j=oldeegval; j > eegval; j--) {			// 3 cycles of all 384 colors in the wheel
-		for (i=0; i < strip.numPixels(); i++) {
-			strip.setPixelColor(i, Wheel( j % 384));
-		}	 
-		strip.show();		// write all the pixels out
-		delay(wait);
-	}
-    } else if (oldeegval <= eegval) {
-      for (j=oldeegval; j < eegval; j++) {			// 3 cycles of all 384 colors in the wheel
-		for (i=0; i < strip.numPixels(); i++) {
-			strip.setPixelColor(i, Wheel( j % 384));
-		}	 
-		strip.show();		// write all the pixels out
-		//delay(wait);
-      }
-    }
-  oldeegval = eegval;
-}
-
-/* Helper functions */
-
-//Input a value 0 to 384 to get a color value.
-//The colours are a transition r - g -b - back to r
-
-uint32_t Wheel(uint16_t WheelPos)
-{
-  byte r, g, b;
-  switch(WheelPos / 128)
-  {
-    case 0:
-      r = 127 - WheelPos % 128;   //Red down
-      g = WheelPos % 128;      // Green up
-      b = 0;                  //blue off
-      break; 
-    case 1:
-      g = 127 - WheelPos % 128;  //green down
-      b = WheelPos % 128;      //blue up
-      r = 0;                  //red off
-      break; 
-    case 2:
-      b = 127 - WheelPos % 128;  //blue down 
-      r = WheelPos % 128;      //red up
-      g = 0;                  //green off
-      break; 
-  }
-  return(strip.Color(r,g,b));
-}
-
-
-
-long supermap(long x, long in_min, long in_max, long out_min, long out_max)
-{
-  return (x - in_min) * (out_max - out_min + 1) / (in_max - in_min + 1) + out_min;
- } 
 
