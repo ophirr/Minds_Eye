@@ -12,11 +12,6 @@
 #define MACADDR 0013ef0048b1
 #define BTBAUDRATE 57600
 
-// Attention threshold 1-100 above which the fire command is sent
-#define LOW_THRESHOLD 30
-#define MED_THRESHOLD 60
-#define HIGH_THRESHOLD 100
-
 // Number below which we consider the signal to be good, 1-255.
 // Lower non-zero numbers denote better signal. 
 #define POOR_QUALITY_THRESHOLD 200
@@ -70,10 +65,20 @@ byte checksum = 0;
 int payloadLength = 0;
 byte payloadData[64] = {0};
 byte poorQuality = 0;
+byte eegval = 0;
 byte attention = 0;
 byte meditation = 0;
+byte attrcvd = 0;
+byte medrcvd = 0;
+byte eegvalready = 0;
 
-byte oldattention = 0;
+byte oldeegval = 150;
+
+long previousMillis = 0;        // will store last time LED was updated
+
+// the follow variables is a long because the time, measured in miliseconds,
+// will quickly become a bigger number than can be stored in an int.
+long interval = 1000;           // interval at which to blink (milliseconds)
 
 // system variables
 long lastReceivedPacket = 0;
@@ -135,11 +140,51 @@ void loop()
       delay( 2 );
     }
   #endif
+   
+  unsigned long currentMillis = millis();
   
   readNeuroValues();
- // if ( attention > 1 ) { rainbow(attention,10); }
-  if ( attention > 1 ) { fire(attention); }
- 
+  
+  //Serial.print("right after neurovalues meditation: ");
+  // Serial.println(meditation);
+   
+  #if DEBUG >= 2
+  Serial.print("currentMillis: ");
+  Serial.println(currentMillis);
+  Serial.print("previousMillis: ");
+  Serial.println(previousMillis);
+  Serial.print("Interval: ");
+  Serial.println(interval);
+  Serial.println();
+  #endif
+  
+  if((currentMillis - previousMillis) > interval ) {
+    // save the last time you blinked the LED 
+    
+    #if DEBUG >=1
+    Serial.print("Interval Time exceeded:"); 
+    Serial.println(currentMillis - previousMillis);
+    #endif
+    
+    previousMillis = currentMillis;    
+   
+   
+   
+    //meditation = 0;
+    if (eegvalready) {
+      Serial.print("attention: ");
+      Serial.println(attrcvd);
+      Serial.print("meditation: ");
+      Serial.println(medrcvd);
+      
+      // TURN ON LEDS
+      if ( medrcvd > 1 ) { fire(medrcvd); }
+      //if ( meditation > 1 ) { rainbow(meditation,10); }
+       
+      // reset eegValReady until next time we have data
+      eegvalready = 0;
+    }
+  }
     
     // Serial.println("Would have triggered Fire\n");
 }
@@ -191,7 +236,6 @@ void BTInit()
 {
   Serial.flush();
   Serial.print( "$$$" );
-  Serial.print( '\n' );
   delay( 150 );
   
   Serial.flush();
@@ -463,6 +507,16 @@ void readNeuroValues() {
      #if DEBUG >= 2
           Serial.print( "Leaving readNeuroValues\n" );
     #endif
+    if (attention > 0 || meditation > 0) { 
+        eegvalready = 1; 
+        attrcvd = attention;
+        medrcvd = meditation;    
+    }
+//    Serial.println("readneurovalues");
+//    Serial.print("attention: ");
+//    Serial.println(attention);
+//    Serial.print("meditation: ");
+//    Serial.println(meditation);
 }
 
 /* Fire the Nerf Stampede. Because of the two-relay system,
@@ -473,24 +527,24 @@ void readNeuroValues() {
 ** motor must be re-enabled (FIRE_READY and FIRE both 
 ** brought low simultaneously).
 */
-void fire(int attention)
+void fire(int eegval)
 {
-   Serial.print ("Got attention: ");
-   Serial.println(attention);
+   Serial.print ("Got eegval: ");
+   Serial.println(eegval);
    
-      if (attention <= 33 ) {
+      if (eegval <= 15 ) {
     fadeUp(127,0,127,20);		// violet
     fadeDown(127,0,127,20);		// violet
-   } else if (attention <= 40) {
+   } else if (eegval <= 30) {
     fadeUp(0, 0,127, 10);		// blue
     fadeDown(0, 0,127, 10);		// blue
-   } else if (attention <= 40) {
+   } else if (eegval <= 45) {
      fadeUp(0, 127,127, 10);
      fadeDown(0, 127,127, 10);		// teal
-   } else if (attention <= 60) {
+   } else if (eegval <= 60) {
      fadeUp(0, 127,0, 10);
      fadeDown(0, 127,0, 10);		// green
-   } else if (attention <= 80) {
+   } else if (eegval <= 75) {
      fadeUp(127, 127,0, 10);
      fadeDown(127, 127,0, 10);		// orange
    } else {
@@ -516,35 +570,37 @@ void fire(int attention)
 
 
 
-void rainbow(uint8_t attention, uint8_t wait) {
+void rainbow(uint8_t eegval, uint8_t wait) {
 	int i, j;
 
-    attention = map(attention, 0, 100, 0, 384);
+    Serial.print("realttention: ");
+    Serial.println(eegval);
+    eegval = map(eegval, 0, 101, 385, 0);
   
-    Serial.print("attention: ");
-    Serial.println(attention);
-    Serial.print("oldattention: ");
-    Serial.println(oldattention);
+    Serial.print("eegval: ");
+    Serial.println(eegval);
+    Serial.print("oldeegval: ");
+    Serial.println(oldeegval);
+    Serial.println();
     
-    
-    if (oldattention >= attention) {
-	for (j=oldattention; j <= attention; j--) {			// 3 cycles of all 384 colors in the wheel
+    if (oldeegval >= eegval) {
+	for (j=oldeegval; j > eegval; j--) {			// 3 cycles of all 384 colors in the wheel
 		for (i=0; i < strip.numPixels(); i++) {
 			strip.setPixelColor(i, Wheel( j % 384));
 		}	 
 		strip.show();		// write all the pixels out
 		delay(wait);
 	}
-    } else if (oldattention <= attention) {
-      for (j=oldattention; j <= attention; j++) {			// 3 cycles of all 384 colors in the wheel
+    } else if (oldeegval <= eegval) {
+      for (j=oldeegval; j < eegval; j++) {			// 3 cycles of all 384 colors in the wheel
 		for (i=0; i < strip.numPixels(); i++) {
 			strip.setPixelColor(i, Wheel( j % 384));
 		}	 
 		strip.show();		// write all the pixels out
-		delay(wait);
-	}
+		//delay(wait);
+      }
     }
-  oldattention = attention;
+  oldeegval = eegval;
 }
 
 /* Helper functions */
@@ -575,3 +631,11 @@ uint32_t Wheel(uint16_t WheelPos)
   }
   return(strip.Color(r,g,b));
 }
+
+
+
+long supermap(long x, long in_min, long in_max, long out_min, long out_max)
+{
+  return (x - in_min) * (out_max - out_min + 1) / (in_max - in_min + 1) + out_min;
+ } 
+
