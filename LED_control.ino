@@ -1,21 +1,40 @@
 
-void fillUpTheEye(uint32_t c, uint8_t wait) {
-  int i,j;
-      strip.setPixelColor(80, c);
-      delay(wait);
-         for (i = 1; i <= 20; i++) {
-           strip.setPixelColor(80+i, c);
-           strip.setPixelColor(80-i, c);
-           strip.show();   // write all the pixels out
-           delay(wait);
-           }
-         for (j=0; j<=29; j++) {
-           strip.setPixelColor(j, c);
-           strip.setPixelColor(59-j, c);
-           strip.show();   // write all the pixels out
-           delay(wait);
-           }  
+// Burst LEDs
+
+void burst(int eegval)
+{
+#if DEBUG >=1
+  Serial.print ("Got eegval: ");
+  Serial.println(eegval);
+#endif
+
+  if (eegval <= 15 ) {
+    fadeUp(127,0,0, BrightLength);		// red
+    fadeDown(127,0,0, BrightLength);		// red
+  } 
+  else if (eegval <= 30) {
+    fadeUp(127, 127,0, BrightLength);
+    fadeDown(127, 127,0, BrightLength);		// orange
+  } 
+  else if (eegval <= 45) {
+    fadeUp(0, 127,0, BrightLength);
+    fadeDown(0, 127,0, BrightLength);		// green
+  } 
+  else if (eegval <= 60) {
+    fadeUp(0, 127,127, BrightLength);
+    fadeDown(0, 127,127, BrightLength);		// teal
+  } 
+  else if (eegval <= 75) {
+    fadeUp(0, 0,127, BrightLength);		// blue
+    fadeDown(0, 0,127, BrightLength);		// blue
+  } 
+  else {
+    fadeUp(127,0,127,BrightLength);		// violet
+    fadeDown(127,0,127,BrightLength);		// violet
+  }
+
 }
+
 
 void fadeUp(uint32_t r, uint32_t g, uint32_t b, uint32_t wait) {
   int i, j;
@@ -24,6 +43,7 @@ void fadeUp(uint32_t r, uint32_t g, uint32_t b, uint32_t wait) {
       strip.setPixelColor(i, strip.Color((r*j)/100,(g*j)/100,(b*j)/100));
     }
   strip.show();
+  delay(BrightPace);
   }
   delay(wait);
 }
@@ -35,6 +55,7 @@ void fadeDown(uint32_t r, uint32_t g, uint32_t b, uint32_t wait) {
       strip.setPixelColor(i, strip.Color((r*j)/100,(g*j)/100,(b*j)/100));  // turn all pixels on
     }
   strip.show();
+  delay(BrightPace);
   }
   delay(wait);
 }
@@ -110,4 +131,22 @@ uint32_t Wheel(uint16_t WheelPos)
   return(strip.Color(r,g,b));
 }
 
+
+void fillUpTheEye(uint32_t c, uint8_t wait) {
+  int i,j;
+      strip.setPixelColor(80, c);
+      delay(wait);
+         for (i = 1; i <= 20; i++) {
+           strip.setPixelColor(80+i, c);
+           strip.setPixelColor(80-i, c);
+           strip.show();   // write all the pixels out
+           delay(wait);
+           }
+         for (j=0; j<=29; j++) {
+           strip.setPixelColor(j, c);
+           strip.setPixelColor(59-j, c);
+           strip.show();   // write all the pixels out
+           delay(wait);
+           }  
+}
 
