@@ -101,7 +101,7 @@ SoftwareSerial BTSerial(RX,TX);
 
 // Set the first variable to the NUMBER of pixels. 32 = 32 pixels in a row
 // The LED strips are 32 LEDs per meter but you can extend/cut the strip
-LPD8806 strip = LPD8806(8);
+LPD8806 strip = LPD8806(34);
 
 void setup()
 {
@@ -136,6 +136,14 @@ void setup()
 
   // Update the strip, to start they are all 'off'
   strip.show();
+  
+  int i = 0;
+  // Eyeball
+  for (i=28; i < 30; i++) {
+      //strip.setPixelColor(i, Wheel( 280));
+      rainbow(3);
+  }
+ 
 }
 
 void loop()
@@ -154,7 +162,6 @@ void loop()
 
   unsigned long currentMillis = millis();
   
-  read_Pots();
   readNeuroValues();
 
   //Serial.print("right after neurovalues meditation: ");
@@ -173,16 +180,21 @@ void loop()
   //if((currentMillis - previousMillis) > interval ) {
 
   if((currentMillis - previousMillis) > (interval + (medrcvd * 10) )) {
+   
     // save the last time we hit interval 
+    previousMillis = currentMillis;    
 
+ 
 #if DEBUG >=1
     Serial.print("Interval Time exceeded:"); 
     Serial.println(currentMillis - previousMillis);
 #endif
 
-    previousMillis = currentMillis;    
-
     if (eegvalready) {
+      
+      // Read the pots for BrightLength and BrightPace
+       read_Pots();
+ 
 
 #if DEBUG >=1
       Serial.print("attention: ");
@@ -196,7 +208,8 @@ void loop()
       BrightLength = (BrightLength + (medrcvd * default_BrLn));
       Serial.print("BrightLength: ");
       Serial.println(BrightLength);  
-      BrightPace = (BrightPace + (medrcvd / default_BrPc));
+    // BrightPace = (BrightPace + (medrcvd / default_BrPc));
+     BrightPace = (BrightPace + (medrcvd / 30));
       Serial.print("BrightPace: ");
       Serial.println(BrightPace);  
       Serial.println();

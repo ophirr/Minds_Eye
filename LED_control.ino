@@ -39,7 +39,7 @@ void burst(int eegval)
 void fadeUp(uint32_t r, uint32_t g, uint32_t b, uint32_t wait) {
   int i, j;
   for (j=MinBright; j <= MaxBright; j++) {
-    for (i=0; i < strip.numPixels(); i++) {
+    for (i=0; i < (strip.numPixels()-10); i++) {
       strip.setPixelColor(i, strip.Color((r*j)/100,(g*j)/100,(b*j)/100));
     }
   strip.show();
@@ -51,7 +51,7 @@ void fadeUp(uint32_t r, uint32_t g, uint32_t b, uint32_t wait) {
 void fadeDown(uint32_t r, uint32_t g, uint32_t b, uint32_t wait) {
   int i, j;
   for (j=MaxBright; j >= MinBright; j--) {
-    for (i=0; i < strip.numPixels(); i++) {
+    for (i=0; i < (strip.numPixels()-10); i++) {
       strip.setPixelColor(i, strip.Color((r*j)/100,(g*j)/100,(b*j)/100));  // turn all pixels on
     }
   strip.show();
@@ -69,7 +69,7 @@ void turnAllOn(uint32_t c, uint32_t wait) {
   delay(wait); 
 }
 
-void rainbow(uint8_t eegval, uint8_t wait) {
+void newrainbow(uint8_t eegval, uint8_t wait) {
 	int i, j;
 
     Serial.print("realttention: ");
@@ -100,6 +100,18 @@ void rainbow(uint8_t eegval, uint8_t wait) {
       }
     }
   oldeegval = eegval;
+}
+
+void rainbow(uint8_t wait) {
+	int i, j;
+	 
+	for (j=0; j < 384; j++) {			// 3 cycles of all 384 colors in the wheel
+		for (i=28; i < 30; i++) {
+			strip.setPixelColor(i, Wheel( (i + j) % 384));
+		}	 
+		strip.show();		// write all the pixels out
+		delay(wait);
+	}
 }
 
 /* Helper functions */
