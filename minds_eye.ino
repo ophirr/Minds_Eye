@@ -31,7 +31,7 @@
 #define HARDSERIAL 1
 
 // Increase non-zero values for increasing levels of debug info
-#define DEBUG 0
+#define DEBUG 1
 
 // Make sure you've downloaded and installed the 
 // SoftwareSerial library prior to enabling
@@ -52,7 +52,8 @@ int TX = 3;
 #endif
 int BTPWR = 7;
 int ATT_LED = 10;
-int MED_LED = 11;
+int MED_LED = 6;
+int RAINBOW_MODE = 7;
 int STATUS = 13;
 
 int att;
@@ -113,20 +114,22 @@ void setup()
   pinMode( TX, OUTPUT );
   pinMode( STATUS, OUTPUT );
   pinMode( BTPWR, OUTPUT );
-  pinMode( ATT_LED, OUTPUT );
-  pinMode( MED_LED, OUTPUT );
+  pinMode( ATT_LED, INPUT );
+  pinMode( MED_LED, INPUT );
 
   digitalWrite( BTPWR, HIGH );
   delay( 500 );
 #if TERMINAL != 1
-#if PROGRAM == 1
-  BTProgram();
+  #if PROGRAM == 1
+    BTProgram();
+  #endif
+  #if ONTHEFLY == 1
+    BTInit();
+  #endif
 #endif
-#if ONTHEFLY == 1
-  BTInit();
-#endif
-#endif
+
   blink( 3, 200 );
+
 #if DEBUG >= 1
   Serial.println("Finished Setup. Ready for LOOP");
 #endif
@@ -137,18 +140,13 @@ void setup()
   // Update the strip, to start they are all 'off'
   strip.show();
   
-  int i = 0;
-  // Eyeball
-  for (i=28; i < 30; i++) {
-      //strip.setPixelColor(i, Wheel( 280));
-      rainbow(3);
-  }
- 
+  eyeball(); 
 }
 
 void loop()
 {
-#if TERMINAL == 1 && HARDSERIAL == 0
+
+  #if TERMINAL == 1 && HARDSERIAL == 0
   BTSerial.print("$$$");
 #if DEBUG >= 1
   Serial.println("Issuing $$$");
@@ -160,60 +158,76 @@ void loop()
   }
 #endif
 
-  unsigned long currentMillis = millis();
+  #if DEBUG >= 2
+  Serial.println("Entered LOOP");
+  #endif
   
-  readNeuroValues();
+    //eyeball(); 
+    unsigned long currentMillis = millis();
+  
+    #if DEBUG >= 2
+      Serial.print("currentMillis: ");
+      Serial.println(currentMillis);
+    #endif
+  
+    // Get some neurosky data
+    readNeuroValues();
+    
+    //Serial.print("right after neurovalues meditation: ");
+    // Serial.println(meditation);
 
-  //Serial.print("right after neurovalues meditation: ");
-  // Serial.println(meditation);
+    #if DEBUG >= 2
+    Serial.print("currentMillis: ");
+    Serial.println(currentMillis);
+    Serial.print("previousMillis: ");
+    Serial.println(previousMillis);
+    Serial.print("Interval: ");
+    Serial.println(interval);
+    Serial.println();
+    #endif
 
-#if DEBUG >= 2
-  Serial.print("currentMillis: ");
-  Serial.println(currentMillis);
-  Serial.print("previousMillis: ");
-  Serial.println(previousMillis);
-  Serial.print("Interval: ");
-  Serial.println(interval);
-  Serial.println();
-#endif
+    //if((currentMillis - previousMillis) > interval ) {
 
-  //if((currentMillis - previousMillis) > interval ) {
-
-  if((currentMillis - previousMillis) > (interval + (medrcvd * 10) )) {
+    if((currentMillis - previousMillis) > (interval + (medrcvd * 10) )) {
    
-    // save the last time we hit interval 
-    previousMillis = currentMillis;    
+      // save the last time we hit interval 
+      previousMillis = currentMillis;    
 
  
-#if DEBUG >=1
-    Serial.print("Interval Time exceeded:"); 
-    Serial.println(currentMillis - previousMillis);
-#endif
+    #if DEBUG >=2
+      Serial.print("Interval Time exceeded:"); 
+      Serial.println(currentMillis - previousMillis);
+    #endif
 
     if (eegvalready) {
       
-      // Read the pots for BrightLength and BrightPace
-       read_Pots();
+        // Read the pots for BrightLength and BrightPace
+         read_Pots();
  
 
-#if DEBUG >=1
+    #if DEBUG >=1
       Serial.print("attention: ");
       Serial.println(attrcvd);
       Serial.print("meditation: ");
       Serial.println(medrcvd);
-#endif
+   #endif 
 
-      Serial.print("meditation: ");
-      Serial.println(medrcvd);
       BrightLength = (BrightLength + (medrcvd * default_BrLn));
+    
+      #if DEBUG >=2
       Serial.print("BrightLength: ");
       Serial.println(BrightLength);  
-    // BrightPace = (BrightPace + (medrcvd / default_BrPc));
-     BrightPace = (BrightPace + (medrcvd / 30));
+      #endif
+      
+      // BrightPace = (BrightPace + (medrcvd / default_BrPc));
+      BrightPace = (BrightPace + (medrcvd / 30));
+  
+      #if DEBUG >=2
       Serial.print("BrightPace: ");
       Serial.println(BrightPace);  
       Serial.println();
-
+      #endif
+      
       // TURN ON LEDS
       if ( medrcvd > 1 ) { 
         burst(medrcvd); 
@@ -222,16 +236,18 @@ void loop()
 
       // reset eegValReady until next time we have data
       eegvalready = 0;
+      } else {
+         rainbowCycle(3);
+      }  
     }
-  }
 
-  // Reset BrightLength
-  BrightLength = 0;
+    // Reset BrightLength
+    BrightLength = 0;
  
-  // Reset BrightLength
-  BrightPace = 0;
+    // Reset BrightLength
+    BrightPace = 0;
+ 
 }
-
 
 
 

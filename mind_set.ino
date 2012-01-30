@@ -221,8 +221,21 @@ byte ReadOneByte() {
   int ByteRead;
 
 #if HARDSERIAL != 0
-  while(!Serial.available());
+  #if DEBUG >= 2
+    int serialdata = 0;
+    serialdata  = Serial.available();
+    Serial.print("Serial.available: ");
+    Serial.println(serialdata);
+  #endif
+   while(!Serial.available());
+  //while(Serial.available());
+   #if DEBUG >= 2
+    Serial.println("Before Serial.read");
+  #endif
   ByteRead = Serial.read();
+  #if DEBUG >= 2
+    Serial.println("After Serial.read");
+  #endif
 #else
   while(!BTSerial.available());
   ByteRead = BTSerial.read();
@@ -343,9 +356,7 @@ void readNeuroValues() {
 #endif  
     } // end if read 0xAA byte
   } // end if read 0xAA byte
-#if DEBUG >= 2
-  Serial.print( "Leaving readNeuroValues\n" );
-#endif
+
   if (attention > 0 || meditation > 0) { 
     eegvalready = 1; 
     attrcvd = attention;
@@ -354,8 +365,9 @@ void readNeuroValues() {
   //    Serial.println("readneurovalues");
   //    Serial.print("attention: ");
   //    Serial.println(attention);
-  //    Serial.print("meditation: ");
   //    Serial.println(meditation);
+  #if DEBUG >= 2
+  Serial.print( "Leaving readNeuroValues, eegvalready: " );
+  Serial.println( eegvalready );
+  #endif
 }
-
-
