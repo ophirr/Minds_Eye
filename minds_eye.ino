@@ -53,8 +53,9 @@ int TX = 3;
 int BTPWR = 7;
 int ATT_LED = 10;
 int MED_LED = 6;
-int RAINBOW_MODE = 7;
+int BTCNCT = 4;
 int STATUS = 13;
+
 
 int att;
 
@@ -83,6 +84,7 @@ byte meditation = 0;
 int attrcvd = 0;
 int medrcvd = 0;
 int eegvalready = 0;
+int btconnected = 0;
 
 byte oldeegval = 150;
 
@@ -116,7 +118,8 @@ void setup()
   pinMode( BTPWR, OUTPUT );
   pinMode( ATT_LED, INPUT );
   pinMode( MED_LED, INPUT );
-
+  pinMode( BTCNCT, INPUT);
+  
   digitalWrite( BTPWR, HIGH );
   delay( 500 );
 #if TERMINAL != 1
@@ -162,6 +165,7 @@ void loop()
   Serial.println("Entered LOOP");
   #endif
   
+  
     //eyeball(); 
     unsigned long currentMillis = millis();
   
@@ -169,9 +173,15 @@ void loop()
       Serial.print("currentMillis: ");
       Serial.println(currentMillis);
     #endif
+    
+         btconnected = digitalRead(BTCNCT);
+         Serial.print("BT Connected status: ");
+         Serial.println(val);
   
-    // Get some neurosky data
-    readNeuroValues();
+    // Get some neurosky data if bluesmirf is connected
+    if(BTCNCT) {
+      readNeuroValues();
+    }
     
     //Serial.print("right after neurovalues meditation: ");
     // Serial.println(meditation);
