@@ -176,7 +176,7 @@ void loop()
     
          btconnected = digitalRead(BTCNCT);
          Serial.print("BT Connected status: ");
-         Serial.println(val);
+         Serial.println(btconnected);
   
     // Get some neurosky data if bluesmirf is connected
     if(BTCNCT) {
